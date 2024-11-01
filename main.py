@@ -1,24 +1,32 @@
-# Initialize Repo and register components
-from repo import Repo
-from tab import Tab
-from widgets.widgets import URLGetter, MessageRotate, Timer, Chat
+# Initialize components
+from widgets.widgets import URLGetter, MessageRotate, DBQuery, Timer, FileWatch, SysStat, Chat
 
-repo = Repo()
-repo.register_component("URLGetter", URLGetter)
-repo.register_component("MessageRotate", MessageRotate)
-repo.register_component("Timer", Timer)
-repo.register_component("Chat", Chat)
+url_getter = URLGetter(title="World Time API")
+url_getter.env['url'] = "http://worldtimeapi.org/api/timezone/Europe/Istanbul"
 
-# Create a Dash and add Tabs and Components
-dash_id = repo.create("MyPage")
-dash = repo.attach(dash_id, "user1")
+message_rotate = MessageRotate(title="Motivational Quotes")
+message_rotate.env['messages'] = ["Live the moment.", "Work hard. Stay humble", "Be a voice, not an echo"]
 
-tab1 = Tab()
-tab1.newrow()
-tab1.newrow()
-url_getter = repo.create_component("URLGetter")
-url_getter.env['url'] = "https://google.com"
-tab1.place(url_getter, 0)
+db_query = DBQuery(title="Database Query")
+db_query.env['query'] = "SELECT * FROM example_table"
 
-# List and view Dash and Tab layouts
-print(tab1.view())
+timer = Timer(title="Countdown Timer")
+timer.env['value'] = 30
+
+file_watch = FileWatch(title="Log Monitor")
+file_watch.env['filename'] = "logfile.txt"
+file_watch.env['numberoflines'] = 5
+
+sys_stat = SysStat(title="System Statistics")
+
+chat = Chat(title="Global Chat")
+chat.trigger("submit", "Hello, everyone!")
+
+# Refresh and display each widget's output
+print(url_getter.refresh())
+print(message_rotate.refresh())
+print(db_query.refresh())
+print(timer.refresh())
+print(file_watch.refresh())
+print(sys_stat.refresh())
+print(chat.refresh())
