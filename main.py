@@ -1,4 +1,3 @@
-# Initialize components
 from widgets.widgets import URLGetter, MessageRotate, DBQuery, Timer, FileWatch, SysStat, Chat
 
 url_getter = URLGetter(title="World Time API")
@@ -22,7 +21,6 @@ sys_stat = SysStat(title="System Statistics")
 chat = Chat(title="Global Chat")
 chat.trigger("submit", "Hello, everyone!")
 
-# Refresh and display each widget's output
 print(url_getter.refresh())
 print(message_rotate.refresh())
 print(db_query.refresh())
