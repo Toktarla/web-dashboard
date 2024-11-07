@@ -1,4 +1,10 @@
-from widgets.widgets import URLGetter, MessageRotate, DBQuery, Timer, FileWatch, SysStat, Chat
+from widgets.chat import Chat
+from widgets.db_query import DBQuery
+from widgets.filewatch import FileWatch
+from widgets.message_route import MessageRotate
+from widgets.sys_stat import SysStat
+from widgets.timer import Timer
+from widgets.url_getter import URLGetter
 
 url_getter = URLGetter(title="World Time API")
 url_getter.env['url'] = "http://worldtimeapi.org/api/timezone/Europe/Istanbul"
@@ -13,12 +19,13 @@ timer = Timer(title="Countdown Timer")
 timer.env['value'] = 30
 
 file_watch = FileWatch(title="Log Monitor")
-file_watch.env['filename'] = "logfile.txt"
+file_watch.env['filename'] = "data/logfile.txt"
 file_watch.env['numberoflines'] = 5
 
 sys_stat = SysStat(title="System Statistics")
 
 chat = Chat(title="Global Chat")
+chat.trigger("submit", "Hello, everyone!")
 chat.trigger("submit", "Hello, everyone!")
 
 print(url_getter.refresh())

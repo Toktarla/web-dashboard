@@ -1,4 +1,4 @@
-from component import Component
+from features.component import Component
 
 
 class Widget(Component):
