@@ -1,41 +1,58 @@
+import uuid
+from features.dash import Dash
+from utils.db import create_user, remove_user
+
+
 class Repo:
-    _instance = None
-    _objects = {}
-    _components = {}
+    dashboards = {}
+    components = {}
+    users = {}
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(Repo, cls).__new__(cls)
-        return cls._instance
+    @staticmethod
+    def create(name):
+        dashboard_id = uuid.uuid4().int >> 96
+        dashboard = Dash(name)
+        Repo.dashboards[dashboard_id] = dashboard
 
-    def create(self, name):
-        obj_id = id(name)
-        self._objects[obj_id] = {'name': name, 'tabs': []}
-        return obj_id
+        return dashboard_id
 
-    def list(self):
-        return [(obj_id, info['name']) for obj_id, info in self._objects.items()]
+    @staticmethod
+    def list():
+        print("Listing Dashboards:")
+        for dash_id, dash in Repo.dashboards.items():
+            attached_users = [user for user, attached_dash in Repo.users.items() if attached_dash == dash]
+            user_list = ", ".join(attached_users) if attached_users else "No users attached"
+            print(f"ID: {dash_id}, Name: {dash.name}, Users: {user_list}")
+        return Repo.dashboards.keys()
 
-    def attach(self, obj_id, user):
-        obj = self._objects.get(obj_id)
-        if obj:
-            obj['attached'] = user
-        return obj
+    @staticmethod
+    def attach(dash_id, user_name):
+        Repo.users[user_name] = Repo.dashboards[dash_id]
+        print(f"User '{user_name}' attached to dashboard ID {dash_id}.")
+        create_user(user_name, dash_id)
 
-    def detach(self, obj_id, user):
-        obj = self._objects.get(obj_id)
-        if obj and obj.get('attached') == user:
-            obj.pop('attached', None)
+        return Repo.users[user_name]
 
-    def delete(self, obj_id):
-        self._objects.pop(obj_id, None)
+    @staticmethod
+    def detach(dash_id, user_name):
+        if user_name in Repo.users:
+            remove_user(user_name)  # Remove user from the database
+            del Repo.users[user_name]
+            print(f"User '{user_name}' detached from dashboard ID {dash_id}.")
+        else:
+            print(f"User '{user_name}' not found.")
 
-    def register_component(self, type_name, cls):
-        self._components[type_name] = cls
+    @staticmethod
+    def register_component(name, cls):
+        Repo.components[name] = cls
 
-    def list_components(self):
-        return list(self._components.keys())
+    @staticmethod
+    def list_components():
+        print("Listing Available Components: " + ", ".join(Repo.components.keys()))
+        return Repo.components.__len__()
 
-    def create_component(self, type_name):
-        component_class = self._components.get(type_name)
-        return component_class() if component_class else None
+    @staticmethod
+    def create_component(name):
+        if name in Repo.components:
+            return Repo.components[name]()
+        raise ValueError(f"Component '{name}' not registered.")

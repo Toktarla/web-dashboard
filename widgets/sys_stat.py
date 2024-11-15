@@ -1,13 +1,17 @@
-from features.widget import Widget
+from features.component import Component
 import psutil
 
 
-class SysStat(Widget):
-    def __init__(self, title="System Stats"):
-        super().__init__(name="SysStat", title=title)
-        self.events.append('refresh')
+class SysStat(Component):
+    def __init__(self):
+        super().__init__("SysStat", "System Stats", "50", "50")
+        self.stat = ""
 
     def refresh(self):
-        cpu_load = psutil.cpu_percent()
-        mem_info = psutil.virtual_memory()
-        return f"CPU Load: {cpu_load}%\nMemory Usage: {mem_info.percent}%"
+        cpu_usage = psutil.cpu_percent(interval=1)
+        memory = psutil.virtual_memory()
+
+        self.stat = f"\nCPU Usage: {cpu_usage}%\nMemory Usage: {memory.percent}%"
+
+    def view(self):
+        return self.stat

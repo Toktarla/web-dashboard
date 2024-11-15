@@ -1,17 +1,15 @@
-from features.widget import Widget
+from features.component import Component
 
 
-class Chat(Widget):
-    def __init__(self, title="Chat"):
-        super().__init__(name="Chat", title=title)
-        self.messages = []
+class Chat(Component):
+    def __init__(self):
+        super().__init__("Chat", "Chat Box", 50, 50)
+        self.lines = []
         self.events.append('submit')
 
-    def trigger(self, event, message=""):
-        if event == "submit":
-            self.messages.append(message)
-        else:
-            super().trigger(event)
+    def submit(self):
+        if 'mess' in self.param:
+            self.lines.append(self.param['mess'])
 
-    def refresh(self):
-        return f"Chat Messages:\n" + "\n".join(self.messages)
+    def view(self):
+        return f"Chat Messages:\n" + "\n".join(self.lines)

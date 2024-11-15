@@ -1,5 +1,6 @@
 class Tab:
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.layout = []
 
     def newrow(self, row=-1):
@@ -9,11 +10,14 @@ class Tab:
             self.layout.insert(row, [])
 
     def place(self, component, row, col=-1):
-        if row < len(self.layout):
-            if col == -1:
-                self.layout[row].append(component)
-            else:
-                self.layout[row].insert(col, component)
+        if row >= len(self.layout):
+            raise IndexError("Row index out of range")
+        if col == -1:
+            self.layout[row].append(component)
+        else:
+            while len(self.layout[row]) <= col:
+                self.layout[row].append(None)
+            self.layout[row][col] = component
 
     def __getitem__(self, position):
         row, col = position
@@ -21,7 +25,7 @@ class Tab:
 
     def __delitem__(self, position):
         row, col = position
-        del self.layout[row][col]
+        self.layout[row][col] = None
 
     def remove(self, component):
         for row in self.layout:
@@ -29,9 +33,14 @@ class Tab:
                 row.remove(component)
 
     def view(self):
-        return "\n".join([", ".join([comp.desc() for comp in row]) for row in self.layout])
+        representation = [f"Tab: {self.name}"]
+        for i, row in enumerate(self.layout):
+            row_view = [comp.view() if comp else "Empty" for comp in row]
+            representation.append(f"Row {i + 1}: {', '.join(row_view)}")
+        return "\n".join(representation)
 
     def refresh(self):
         for row in self.layout:
             for comp in row:
-                comp.refresh()
+                if comp:
+                    comp.refresh()

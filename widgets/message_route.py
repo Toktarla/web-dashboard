@@ -1,14 +1,17 @@
-from features.widget import Widget
+from features.component import Component
 
-class MessageRotate(Widget):
-    def __init__(self, title="Message Rotate"):
-        super().__init__(name="MessageRotate", title=title)
+
+class MessageRotate(Component):
+    def __init__(self):
+        super().__init__("MessageRotate", "Message Rotator", 50, 50)
         self.env['messages'] = []
         self.current_index = 0
-        self.events.append('refresh')
 
     def refresh(self):
         if self.env['messages']:
             self.current_index = (self.current_index + 1) % len(self.env['messages'])
+
+    def view(self):
+        if self.env['messages']:
             return f"Message: {self.env['messages'][self.current_index]}"
         return "No messages available."

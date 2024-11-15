@@ -1,25 +1,22 @@
 class Component:
-    def desc(self):
-        raise NotImplementedError
+    def __init__(self, name, title, height, width):
+        self.name = name
+        self.title = title
+        self.height = height
+        self.width = width
+        self.env = {}
+        self.param = {}
+        self.events = []
+        self.refresh_interval = 0
 
-    def type(self):
-        raise NotImplementedError
+    def view(self):
+        return f"Component: {self.title} ({self.name})"
 
-    def attrs(self):
-        return {}
-
-    def __getattr__(self, attr):
-        if attr in self.attrs():
-            return self.attrs()[attr]
+    def trigger(self, event):
+        if event in self.events:
+            getattr(self, event)()
         else:
-            raise AttributeError(f"Attribute {attr} not found")
+            raise ValueError(f"Event '{event}' not implemented")
 
-    def __setattr__(self, attr, value):
-        if attr in self.attrs():
-            self.attrs()[attr] = value
-        else:
-            super().__setattr__(attr, value)
-
-    def draw(self):
-        return "Component visual representation"
-
+    def refresh(self):
+        pass
