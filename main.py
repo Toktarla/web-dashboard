@@ -5,6 +5,7 @@ from utils.db import create_db
 from widgets.chat import Chat
 from widgets.db_query import DBQuery
 from widgets.db_update import DBUpdate
+from widgets.file_share import FileShare
 from widgets.filewatch import FileWatch
 from widgets.message_route import MessageRotate
 from widgets.sys_stat import SysStat
@@ -22,6 +23,7 @@ def main():
     Repo.register_component("FileWatch", FileWatch)
     Repo.register_component("SysStat", SysStat)
     Repo.register_component("DBUpdate", DBUpdate)
+    Repo.register_component("FileShare", FileShare)
 
     # Create dashboard
     dashboard_id = Repo.create("MyPage")
