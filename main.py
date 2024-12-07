@@ -1,7 +1,10 @@
+import argparse
 from features.repo import Repo
+from server import DashboardServer
 from utils.db import create_db
 from widgets.chat import Chat
 from widgets.db_query import DBQuery
+from widgets.db_update import DBUpdate
 from widgets.filewatch import FileWatch
 from widgets.message_route import MessageRotate
 from widgets.sys_stat import SysStat
@@ -18,6 +21,7 @@ def main():
     Repo.register_component("DBQuery", DBQuery)
     Repo.register_component("FileWatch", FileWatch)
     Repo.register_component("SysStat", SysStat)
+    Repo.register_component("DBUpdate", DBUpdate)
 
     # Create dashboard
     dashboard_id = Repo.create("MyPage")
@@ -96,6 +100,13 @@ def main():
 
     t1.refresh()
     print(t1.view())
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--port', type=int, required=True)
+    args = parser.parse_args()
+
+    server = DashboardServer(args.port)
+    server.start()
 
 
 if __name__ == "__main__":

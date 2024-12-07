@@ -1,6 +1,8 @@
 import uuid
 from features.dash import Dash
+from server import Agent, DashboardServer
 from utils.db import create_user, remove_user
+import pickle
 
 
 class Repo:
@@ -54,5 +56,29 @@ class Repo:
     @staticmethod
     def create_component(name):
         if name in Repo.components:
-            return Repo.components[name]()
+            component = Repo.components[name]()
+            if component.refresh_interval > 0:
+                for client in DashboardServer.instance.clients.values():
+                    if isinstance(client, Agent):
+                        client.server.timer_thread.add_component(component, component.refresh_interval)
+            return component
         raise ValueError(f"Component '{name}' not registered.")
+    
+    @staticmethod
+    def save_state(filename):
+        state = {
+            'dashboards': Repo.dashboards,
+            'users': Repo.users
+        }
+        with open(filename, 'wb') as f:
+            pickle.dump(state, f)
+
+    @staticmethod
+    def load_state(filename):
+        try:
+            with open(filename, 'rb') as f:
+                state = pickle.load(f)
+                Repo.dashboards = state['dashboards']
+                Repo.users = state['users']
+        except FileNotFoundError:
+            print(f"No saved state found at {filename}")
