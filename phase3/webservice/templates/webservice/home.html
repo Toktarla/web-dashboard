@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 3 Web Service</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Add Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --background-color: #f8fafc;
+            --surface-color: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1, .header h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .delete-btn {
+            background-color: #dc2626;
+        }
+
+        .delete-btn:hover {
+            background-color: #b91c1c;
+        }
+
+        .dashboard-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding: 0.5rem;
+            background-color: var(--surface-color);
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-sm);
+            overflow-x: auto;
+        }
+
+        .dashboard-nav a {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 0.375rem;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .dashboard-nav a:hover, .dashboard-nav a.active {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: var(--surface-color);
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+        }
+
+        .tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background-color: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .components {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .component {
+            background-color: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .component-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .component-content {
+            background-color: var(--background-color);
+            padding: 1rem;
+            border-radius: 0.375rem;
+        }
+
+        .component-content pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+
+        .dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .dialog-content {
+            background-color: var(--surface-color);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-md);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            background-color: var(--surface-color);
+        }
+
+        .component-option {
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .component-option:hover {
+            background-color: var(--background-color);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .dashboard-nav {
+                padding: 0.25rem;
+            }
+
+            .dashboard-nav a {
+                padding: 0.5rem 0.75rem;
+            }
+        }
+    </style>
+    <script>
+        let dashboards = {};
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboards();
+            handleRoute();
+            
+            // Handle browser back/forward buttons
+            window.addEventListener('popstate', handleRoute);
+        });
+
+        function handleRoute() {
+            const path = window.location.pathname;
+            const dashboardName = path.split('/').pop();
+            
+            if (dashboardName && dashboardName !== '') {
+                showDashboard(dashboardName);
+            } else {
+                showDashboardList();
+            }
+            updateNavigation();
+        }
+
+        function createDashboard() {
+            const name = prompt("Enter dashboard name:");
+            if (!name) return;
+            
+            const safeName = name.toLowerCase().replace(/\s+/g, '-');
+            
+            if (dashboards[safeName]) {
+                alert('Dashboard with this name already exists!');
+                return;
+            }
+
+            dashboards[safeName] = {
+                name: name,
+                tabs: []
+            };
+            
+            saveDashboards();
+            updateNavigation();
+            navigateTo(safeName);
+        }
+
+        function showDashboard(dashboardName) {
+            const dashboard = dashboards[dashboardName];
+            if (!dashboard) {
+                showDashboardList();
+                return;
+            }
+
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="header">
+                    <h2><span class="material-icons">dashboard</span>${dashboard.name}</h2>
+                    <button onclick="createTab('${dashboardName}')">
+                        <span class="material-icons">add</span>
+                        Create New Tab
+                    </button>
+                </div>
+                <div class="tabs">
+                    ${dashboard.tabs.map((tab, index) => `
+                        <div class="tab ${index === 0 ? 'active' : ''}" 
+                             onclick="switchTab('${dashboardName}', ${index})">
+                            <span class="material-icons">tab</span>
+                            ${tab.name}
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="tab-contents">
+                    ${dashboard.tabs.map((tab, index) => `
+                        <div class="tab-content ${index === 0 ? 'active' : ''}" id="tab-${index}">
+                            <div class="header">
+                                <h3>${tab.name}</h3>
+                                <button onclick="createComponent('${dashboardName}', ${index})">
+                                    <span class="material-icons">add_box</span>
+                                    Add Component
+                                </button>
+                            </div>
+                            <div class="components">
+                                ${tab.components.map(comp => `
+                                    <div class="component">${comp}</div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function showDashboardList() {
+            const mainContent = document.getElementById('main-content');
+            mainContent.innerHTML = `
+                <div class="header">
+                    <h2><span class="material-icons">space_dashboard</span>Available Dashboards</h2>
+                    <button onclick="createDashboard()">
+                        <span class="material-icons">add</span>
+                        Create New Dashboard
+                    </button>
+                </div>
+                <div class="dashboard-list">
+                    ${Object.entries(dashboards).map(([key, dashboard]) => `
+                        <div class="dashboard-item" onclick="navigateTo('${key}')">
+                            <span class="material-icons">dashboard</span>
+                            ${dashboard.name}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function navigateTo(dashboardName) {
+            const newPath = dashboardName ? `/dashboards/${dashboardName}` : '/dashboards';
+            window.history.pushState({}, '', newPath);
+            handleRoute();
+        }
+
+        function createTab(dashboardName) {
+            const tabName = prompt("Enter tab name:");
+            if (!tabName) return;
+
+            dashboards[dashboardName].tabs.push({
+                name: tabName,
+                components: []
+            });
+
+            saveDashboards();
+            showDashboard(dashboardName);
+        }
+
+        function switchTab(dashboardName, tabIndex) {
+            const tabs = document.querySelectorAll('.tab');
+            const contents = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            contents.forEach(content => content.classList.remove('active'));
+
+            tabs[tabIndex].classList.add('active');
+            contents[tabIndex].classList.add('active');
+        }
+
+        function createComponent(dashboardName, tabIndex) {
+            const componentHTML = `
+                <h4>
+                    <span class="material-icons">widgets</span>
+                    Component
+                </h4>
+                <form>
+                    <div class="form-group">
+                        <label for="username">
+                            <span class="material-icons">person</span>
+                            Username
+                        </label>
+                        <input type="text" name="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="filename">
+                            <span class="material-icons">description</span>
+                            Filename
+                        </label>
+                        <input type="text" name="filename">
+                    </div>
+                    <div class="form-group">
+                        <label for="content">
+                            <span class="material-icons">edit_note</span>
+                            Content
+                        </label>
+                        <textarea name="content" rows="4"></textarea>
+                    </div>
+                    <button type="button" onclick="refreshComponent(this)">
+                        <span class="material-icons">refresh</span>
+                        Refresh
+                    </button>
+                </form>
+            `;
+
+            dashboards[dashboardName].tabs[tabIndex].components.push(componentHTML);
+            saveDashboards();
+            showDashboard(dashboardName);
+        }
+
+        function refreshComponent(button) {
+            alert('Component refreshed!');
+        }
+
+        function saveDashboards() {
+            localStorage.setItem('dashboards', JSON.stringify(dashboards));
+        }
+
+        function loadDashboards() {
+            const saved = localStorage.getItem('dashboards');
+            if (saved) {
+                dashboards = JSON.parse(saved);
+            }
+            updateNavigation();
+        }
+
+        function updateNavigation() {
+            const nav = document.querySelector('.dashboard-nav');
+            nav.innerHTML = `
+                <a href="/dashboards" onclick="event.preventDefault(); navigateTo('')">
+                    <span class="material-icons">home</span>
+                    Home
+                </a>
+                ${Object.entries(dashboards).map(([key, dashboard]) => `
+                    <a href="/dashboards/${key}" 
+                       onclick="event.preventDefault(); navigateTo('${key}')"
+                       ${window.location.pathname.includes(key) ? 'class="active"' : ''}>
+                        <span class="material-icons">space_dashboard</span>
+                        ${dashboard.name}
+                    </a>
+                `).join('')}
+            `;
+        }
+
+        function showDashboard(dashboardName) {
+        const dashboard = dashboards[dashboardName];
+        if (!dashboard) {
+            showDashboardList();
+            return;
+        }
+
+        const mainContent = document.getElementById('main-content');
+        mainContent.innerHTML = `
+            <div class="header">
+                <h2><span class="material-icons">dashboard</span>${dashboard.name}</h2>
+                <div class="header-actions">
+                    <button onclick="createTab('${dashboardName}')">
+                        <span class="material-icons">add</span>
+                        Create New Tab
+                    </button>
+                    <button class="delete-btn" onclick="deleteDashboard('${dashboardName}')">
+                        <span class="material-icons">delete</span>
+                    </button>
+                </div>
+            </div>
+            <div class="tabs">
+                ${dashboard.tabs.map((tab, index) => `
+                    <div class="tab ${index === 0 ? 'active' : ''}" 
+                         onclick="switchTab('${dashboardName}', ${index})">
+                        <span class="material-icons">tab</span>
+                        ${tab.name}
+                        <span class="delete-btn" onclick="deleteTab('${dashboardName}', ${index}); event.stopPropagation();">
+                            <span class="material-icons">close</span>
+                        </span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="tab-contents">
+                ${dashboard.tabs.map((tab, index) => `
+                    <div class="tab-content ${index === 0 ? 'active' : ''}" id="tab-${index}">
+                        <div class="header">
+                            <h3>${tab.name}</h3>
+                            <button onclick="createComponent('${dashboardName}', ${index})">
+                                <span class="material-icons">add_box</span>
+                                Add Component
+                            </button>
+                        </div>
+                        <div class="components">
+                            ${tab.components.map((comp, compIndex) => `
+                                <div class="component">
+                                    <div class="component-header">
+                                        <h4>
+                                            <span class="material-icons">widgets</span>
+                                            Component
+                                        </h4>
+                                        <span class="delete-btn" onclick="deleteComponent('${dashboardName}', ${index}, ${compIndex})">
+                                            <span class="material-icons">delete</span>
+                                        </span>
+                                    </div>
+                                    ${comp}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function deleteDashboard(dashboardName) {
+        if (confirm(`Are you sure you want to delete the dashboard "${dashboards[dashboardName].name}"?`)) {
+            delete dashboards[dashboardName];
+            saveDashboards();
+            navigateTo('');
+        }
+    }
+
+    function deleteTab(dashboardName, tabIndex) {
+        const tabName = dashboards[dashboardName].tabs[tabIndex].name;
+        if (confirm(`Are you sure you want to delete the tab "${tabName}"?`)) {
+            dashboards[dashboardName].tabs.splice(tabIndex, 1);
+            saveDashboards();
+            showDashboard(dashboardName);
+        }
+    }
+
+    function deleteComponent(dashboardName, tabIndex, componentIndex) {
+        if (confirm('Are you sure you want to delete this component?')) {
+            dashboards[dashboardName].tabs[tabIndex].components.splice(componentIndex, 1);
+            saveDashboards();
+            showDashboard(dashboardName);
+        }
+    }
+
+    function createComponent(dashboardName, tabIndex) {
+   
+    const components = [
+        { 
+            name: 'SYSSTAT', 
+            description: 'Display system statistics',
+            hasParams: false
+        },
+        { 
+            name: 'CHAT', 
+            description: 'Send chat messages',
+            hasParams: true,
+            command: 'CHAT',
+            params: [
+                { name: 'message', label: 'Message', type: 'text' }
+            ]
+        },
+        { 
+            name: 'VIEW_CHAT', 
+            description: 'View chat history',
+            hasParams: false
+        },
+        { 
+            name: 'DBQUERY', 
+            description: 'Execute database queries',
+            hasParams: true,
+            params: [
+                { name: 'query', label: 'SQL Query', type: 'text' }
+            ]
+        },
+        { 
+            name: 'VIEW_DBQUERY', 
+            description: 'View query results',
+            hasParams: false
+        },
+        { 
+            name: 'FILEWATCH', 
+            description: 'Monitor file changes',
+            hasParams: false
+        },
+        { 
+            name: 'MESSAGE_ROTATE', 
+            description: 'Rotate through messages',
+            hasParams: false
+        },
+        { 
+            name: 'URLGET', 
+            description: 'Fetch URL content',
+            hasParams: true,
+            params: [
+                { name: 'url', label: 'URL', type: 'text' }
+            ]
+        },
+        { 
+            name: 'TIMER', 
+            description: 'Timer control',
+            hasParams: true,
+            params: [
+                { 
+                    name: 'action', 
+                    label: 'Action', 
+                    type: 'select',
+                    options: ['start', 'stop', 'reset', 'pause', 'play']
+                },
+                { 
+                    name: 'seconds', 
+                    label: 'Time (seconds)', 
+                    type: 'number' 
+                }
+            ]
+        },
+        { 
+            name: 'VIEW_TIMER', 
+            description: 'View timer status',
+            hasParams: false
+        }
+    ];
+
+    const dialog = document.createElement('div');
+    dialog.className = 'dialog';
+    dialog.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+
+    const dialogContent = document.createElement('div');
+    dialogContent.style.cssText = `
+        background: var(--surface-color);
+        padding: 2rem;
+        border-radius: 0.75rem;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: var(--shadow-md);
+    `;
+
+    dialogContent.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="margin: 0;">Select Component</h3>
+            <button onclick="this.closest('.dialog').remove()" style="background: none; border: none;">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        <div class="component-grid" style="display: grid; gap: 1rem;">
+            ${components.map(comp => `
+                <div class="component-option" 
+                     onclick="handleComponentSelect('${dashboardName}', ${tabIndex}, ${JSON.stringify(comp).replace(/"/g, '&quot;')})">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="material-icons">widgets</span>
+                        <strong>${comp.name}</strong>
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 0.5rem 0;">
+                        ${comp.description}
+                    </p>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    dialog.appendChild(dialogContent);
+    document.body.appendChild(dialog);
+
+    // Add hover effect for component options
+    const options = dialogContent.querySelectorAll('.component-option');
+    options.forEach(option => {
+        option.addEventListener('mouseover', () => {
+            option.style.backgroundColor = 'var(--background-color)';
+        });
+        option.addEventListener('mouseout', () => {
+            option.style.backgroundColor = '';
+        });
+    });
+}
+
+function handleComponentSelect(dashboardName, tabIndex, component) {
+    if (!component.hasParams) {
+        // For components without parameters, send command directly
+        sendComponentCommand(dashboardName, tabIndex, component.name);
+        document.querySelector('.dialog').remove();
+        return;
+    }
+
+    // Create parameter input dialog
+    const paramDialog = document.createElement('div');
+    paramDialog.className = 'dialog';
+    paramDialog.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    `;
+
+    const paramContent = document.createElement('div');
+    paramContent.style.cssText = `
+        background: var(--surface-color);
+        padding: 2rem;
+        border-radius: 0.75rem;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: var(--shadow-md);
+    `;
+
+    paramContent.innerHTML = `
+        <h3>${component.name} Parameters</h3>
+        <form onsubmit="event.preventDefault(); handleParamSubmit(this, '${dashboardName}', ${tabIndex}, '${component.name}')">
+            ${component.params.map(param => `
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="${param.name}">${param.label}</label>
+                    ${param.type === 'select' ? `
+                        <select name="${param.name}" required>
+                            ${param.options.map(opt => `
+                                <option value="${opt}">${opt}</option>
+                            `).join('')}
+                        </select>
+                    ` : `
+                        <input type="${param.type}" name="${param.name}" required>
+                    `}
+                </div>
+            `).join('')}
+            <button type="submit">Create Component</button>
+        </form>
+    `;
+
+    paramDialog.appendChild(paramContent);
+    document.body.appendChild(paramDialog);
+    document.querySelector('.dialog').remove();
+}
+
+function handleParamSubmit(form, dashboardName, tabIndex, componentName) {
+    const formData = new FormData(form);
+    let command = componentName;
+    
+    formData.forEach((value, key) => {
+        command += ' ' + value;
+    });
+
+    sendComponentCommand(dashboardName, tabIndex, command);
+    document.querySelector('.dialog').remove();
+}
+
+function sendComponentCommand(dashboardName, tabIndex, command) {
+    fetch('/send_command/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: `command=${encodeURIComponent(command)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        const componentHTML = createComponentHTML(command, data.response);
+        dashboards[dashboardName].tabs[tabIndex].components.push(componentHTML);
+        saveDashboards();
+        showDashboard(dashboardName);
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function selectComponent(dashboardName, tabIndex, componentName) {
+    if (componentName === 'SYSSTAT') {
+        // Use the existing TCP client to send SYSSTAT command
+        fetch('/send_command/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: 'command=SYSSTAT'
+        })
+        .then(response => response.json())
+        .then(data => {
+            const componentHTML = `
+                <div class="component-header">
+                    <h4>
+                        <span class="material-icons">monitoring</span>
+                        System Statistics
+                    </h4>
+                    <button onclick="refreshSysStat(this, '${dashboardName}', ${tabIndex})">
+                        <span class="material-icons">refresh</span>
+                        Refresh
+                    </button>
+                </div>
+                <div class="sysstat-content">
+                    <pre>${data.response}</pre>
+                </div>
+            `;
+
+            dashboards[dashboardName].tabs[tabIndex].components.push(componentHTML);
+            saveDashboards();
+            showDashboard(dashboardName);
+        })
+        .catch(error => console.error('Error:', error));
+    }
+    document.querySelector('.dialog').remove();
+}
+
+function refreshSysStat(button, dashboardName, tabIndex) {
+    const componentDiv = button.closest('.component');
+    fetch('/send_command/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: 'command=SYSSTAT'
+    })
+    .then(response => response.json())
+    .then(data => {
+        componentDiv.querySelector('.sysstat-content pre').textContent = data.response;
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span class="material-icons">dashboard</span>
+                Dashboard Manager
+            </h1>
+        </div>
+        <nav class="dashboard-nav"></nav>
+        <div id="main-content"></div>
+    </div>
+</body>
+</html>
