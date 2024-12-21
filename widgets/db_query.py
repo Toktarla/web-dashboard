@@ -10,7 +10,7 @@ class DBQuery(Component):
 
     def refresh(self):
         if self.env['query']:
-            connection = sqlite3.connect("dashboard.db")
+            connection = sqlite3.connect("app_data.db")
             cursor = connection.cursor()
             cursor.execute(self.env['query'])
             self.results = cursor.fetchall()
