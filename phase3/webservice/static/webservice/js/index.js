@@ -1,20 +1,20 @@
-let dashboards = {};
-
 function getComponentIcon(componentType) {
-    const iconMap = {
-        'SYSSTAT': 'monitoring',
-        'CHAT': 'chat',
-        'VIEW_CHAT': 'chat_bubble',
-        'DBQUERY': 'database',
-        'VIEW_DBQUERY': 'table_view',
-        'FILEWATCH': 'folder',
-        'MESSAGE_ROTATE': 'rotate_right',
-        'URLGET': 'link',
-        'TIMER': 'timer',
-        'VIEW_TIMER': 'schedule'
-    };
-    return iconMap[componentType] || 'widgets';
+  const iconMap = {
+    SYSSTAT: "monitoring",
+    CHAT: "chat",
+    VIEW_CHAT: "chat_bubble",
+    DBQUERY: "database",
+    VIEW_DBQUERY: "table_view",
+    FILEWATCH: "folder",
+    MESSAGE_ROTATE: "rotate_right",
+    URLGET: "link",
+    TIMER: "timer",
+    VIEW_TIMER: "schedule",
+  };
+  return iconMap[componentType] || "widgets";
 }
+
+let dashboards = {};
 
 document.addEventListener("DOMContentLoaded", () => {
   loadDashboards();
@@ -58,18 +58,15 @@ function createDashboard() {
 }
 
 function initializeDragAndDrop(dashboardName, tabIndex) {
-  const componentsContainer = document.querySelector('.components');
-  if (!componentsContainer) return;
+  const componentsContainer = document.querySelector(".components");
+  let components = componentsContainer.querySelectorAll(".component");
 
-  const components = componentsContainer.querySelectorAll('.component');
-  if (!components.length) return;
-
-  components.forEach(component => {
+  components.forEach((component) => {
     component.draggable = true;
-    component.addEventListener('dragstart', handleDragStart);
-    component.addEventListener('dragend', handleDragEnd);
-    component.addEventListener('dragover', handleDragOver);
-    component.addEventListener('drop', (e) => handleDrop(e, dashboardName, tabIndex));
+    component.addEventListener("dragstart", handleDragStart);
+    component.addEventListener("dragend", handleDragEnd);
+    component.addEventListener("dragover", handleDragOver);
+    component.addEventListener("drop", handleDrop);
   });
 
   function handleDragStart(e) {
@@ -102,12 +99,11 @@ function initializeDragAndDrop(dashboardName, tabIndex) {
     }
   }
 
-  function handleDrop(e, dashboardName, tabIndex) {
+  function handleDrop(e) {
     e.preventDefault();
-    const componentsContainer = document.querySelector('.components');
-    if (!componentsContainer) return;
-
-    const newOrder = Array.from(componentsContainer.children).map(comp => comp.outerHTML);
+    const newOrder = Array.from(componentsContainer.children).map(
+      (comp) => comp.innerHTML
+    );
     dashboards[dashboardName].tabs[tabIndex].components = newOrder;
     saveDashboards();
   }
@@ -160,18 +156,13 @@ function createTab(dashboardName) {
 }
 
 function switchTab(dashboardName, tabIndex) {
-  const tabs = document.querySelectorAll('.tab');
-  const tabContents = document.querySelectorAll('.tab-content');
-  
-  if (!tabs.length || !tabContents.length) return;
+  const tabs = document.querySelectorAll(".tab");
+  const contents = document.querySelectorAll(".tab-content");
+  tabs.forEach((tab) => tab.classList.remove("active"));
+  contents.forEach((content) => content.classList.remove("active"));
 
-  tabs.forEach(tab => tab.classList.remove('active'));
-  tabContents.forEach(content => content.classList.remove('active'));
-
-  tabs[tabIndex].classList.add('active');
-  tabContents[tabIndex].classList.add('active');
-
-  initializeDragAndDrop(dashboardName, tabIndex);
+  tabs[tabIndex].classList.add("active");
+  contents[tabIndex].classList.add("active");
 }
 
 function createComponent(dashboardName, tabIndex) {
@@ -214,8 +205,43 @@ function createComponent(dashboardName, tabIndex) {
   showDashboard(dashboardName);
 }
 
-function refreshComponent(button) {
-  alert("Component refreshed!");
+function refreshComponent(button, command) {
+  const componentDiv = button.closest(".component");
+  const contentDiv = componentDiv.querySelector(".component-content pre");
+
+  // Add loading state
+  button.disabled = true;
+  const originalIcon = button.innerHTML;
+  button.innerHTML = '<span class="material-icons rotating">sync</span>';
+
+  fetch("/send_command/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: `command=${encodeURIComponent(command)}`,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      // Update the component content
+      contentDiv.textContent = data.response;
+
+      // Add a brief highlight effect
+      contentDiv.classList.add("refreshed");
+      setTimeout(() => {
+        contentDiv.classList.remove("refreshed");
+      }, 1000);
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      alert("Error refreshing component: " + error.message);
+    })
+    .finally(() => {
+      // Restore button state
+      button.disabled = false;
+      button.innerHTML = originalIcon;
+    });
 }
 
 function saveDashboards() {
@@ -263,10 +289,12 @@ function showDashboard(dashboardName) {
     return;
   }
 
-  const mainContent = document.getElementById('main-content');
+  const mainContent = document.getElementById("main-content");
   mainContent.innerHTML = `
         <div class="header">
-            <h2><span class="material-icons">dashboard</span>${dashboard.name}</h2>
+            <h2><span class="material-icons">dashboard</span>${
+              dashboard.name
+            }</h2>
             <div class="header-actions">
                 <button onclick="createTab('${dashboardName}')">
                     <span class="material-icons">add</span>
@@ -278,8 +306,10 @@ function showDashboard(dashboardName) {
             </div>
         </div>
         <div class="tabs">
-            ${dashboard.tabs.map((tab, index) => `
-                <div class="tab ${index === 0 ? 'active' : ''}" 
+            ${dashboard.tabs
+              .map(
+                (tab, index) => `
+                <div class="tab ${index === 0 ? "active" : ""}" 
                      onclick="switchTab('${dashboardName}', ${index})">
                     <span class="material-icons">tab</span>
                     ${tab.name}
@@ -287,11 +317,17 @@ function showDashboard(dashboardName) {
                         <span class="material-icons">close</span>
                     </span>
                 </div>
-            `).join('')}
+            `
+              )
+              .join("")}
         </div>
         <div class="tab-contents">
-            ${dashboard.tabs.map((tab, index) => `
-                <div class="tab-content ${index === 0 ? 'active' : ''}" id="tab-${index}">
+            ${dashboard.tabs
+              .map(
+                (tab, index) => `
+                <div class="tab-content ${
+                  index === 0 ? "active" : ""
+                }" id="tab-${index}">
                     <div class="header">
                         <h3>${tab.name}</h3>
                         <button onclick="createComponent('${dashboardName}', ${index})">
@@ -300,10 +336,16 @@ function showDashboard(dashboardName) {
                         </button>
                     </div>
                     <div class="components">
-                        ${Array.isArray(tab.components) ? tab.components.join('') : ''}
+                        ${
+                          Array.isArray(tab.components)
+                            ? tab.components.join("")
+                            : ""
+                        }
                     </div>
                 </div>
-            `).join('')}
+            `
+              )
+              .join("")}
         </div>
     `;
 
@@ -332,21 +374,21 @@ function deleteTab(dashboardName, tabIndex) {
 }
 
 function deleteComponent(button, dashboardName, tabIndex) {
-    if (!confirm('Are you sure you want to delete this component?')) {
-        return;
-    }
+  if (!confirm("Are you sure you want to delete this component?")) {
+    return;
+  }
 
-    const component = button.closest('.component');
-    const componentIndex = Array.from(component.parentNode.children).indexOf(component);
-    
-    // Remove from dashboards object
-    dashboards[dashboardName].tabs[tabIndex].components.splice(componentIndex, 1);
-    
-    // Save to localStorage
-    saveDashboards();
-    
-    // Update UI
-    showDashboard(dashboardName);
+  const component = button.closest(".component");
+  const componentIndex = Array.from(component.parentNode.children).indexOf(
+    component
+  );
+
+  // Remove from dashboards object
+  dashboards[dashboardName].tabs[tabIndex].components.splice(componentIndex, 1);
+
+  // Save to localStorage
+  saveDashboards();
+  showDashboard(dashboardName);
 }
 
 function createComponent(dashboardName, tabIndex) {
@@ -578,52 +620,49 @@ function handleParamSubmit(form, dashboardName, tabIndex, componentName) {
 }
 
 function sendComponentCommand(dashboardName, tabIndex, command) {
-  fetch('/send_command/', {
-    method: 'POST',
+  fetch("/send_command/", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'X-CSRFToken': getCookie('csrftoken')
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-CSRFToken": getCookie("csrftoken"),
     },
-    body: `command=${encodeURIComponent(command)}`
+    body: `command=${encodeURIComponent(command)}`,
   })
-  .then(response => response.json())
-  .then(data => {
-    if (!dashboards[dashboardName].tabs[tabIndex].components) {
-      dashboards[dashboardName].tabs[tabIndex].components = [];
-    }
-    const componentHTML = createComponentHTML(command, data.response, dashboardName, tabIndex);
-    dashboards[dashboardName].tabs[tabIndex].components.push(componentHTML);
-    saveDashboards();
-    showDashboard(dashboardName);
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Error creating component: ' + error.message);
-  });
+    .then((response) => response.json())
+    .then((data) => {
+      const componentHTML = createComponentHTML(command, data.response,dashboardName, tabIndex);
+      dashboards[dashboardName].tabs[tabIndex].components.push(componentHTML);
+      saveDashboards();
+      showDashboard(dashboardName);
+    })
+    .catch((error) => console.error("Error:", error));
 }
 
 function createComponentHTML(command, response, dashboardName, tabIndex) {
-    const commandParts = command.split(' ');
-    const componentType = commandParts[0];
-    
-    return `
+  const commandParts = command.split(" ");
+  const componentType = commandParts[0];
+
+  return `
         <div class="component" draggable="true">
             <div class="component-header">
                 <h4>
-                    <span class="material-icons">${getComponentIcon(componentType)}</span>
+                    <span class="material-icons">${getComponentIcon(
+                      componentType
+                    )}</span>
                     ${componentType}
                 </h4>
-                <div class="component-actions">
-                    <button onclick="refreshComponent(this, '${command.replace(/'/g, "\\'")}')" class="refresh-btn">
-                        <span class="material-icons">refresh</span>
-                    </button>
-                    <button onclick="deleteComponent(this, '${dashboardName}', ${tabIndex})" class="delete-btn">
+                <button onclick="refreshComponent(this, '${command.replace(
+                  /'/g,
+                  "\\'"
+                )}')" class="refresh-btn">
+                    <span class="material-icons">refresh</span>
+                </button>
+                <button onclick="deleteComponent(this, '${dashboardName}', ${tabIndex})" class="delete-btn">
                         <span class="material-icons">delete</span>
                     </button>
-                </div>
             </div>
             <div class="component-content">
-                <pre>${response || 'No data'}</pre>
+                <pre>${response || "No data"}</pre>
             </div>
         </div>
     `;

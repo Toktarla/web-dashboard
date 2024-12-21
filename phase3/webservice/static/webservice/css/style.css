@@ -370,3 +370,39 @@ button:hover {
 .component-actions .material-icons {
     font-size: 1.25rem;
 }
+
+/* Refresh button styles */
+.refresh-btn {
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.refresh-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Rotation animation for refresh icon */
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.rotating {
+    animation: rotate 1s linear infinite;
+}
+
+/* Highlight effect for refreshed content */
+@keyframes highlight {
+    0% { background-color: var(--primary-color); opacity: 0.1; }
+    100% { background-color: transparent; opacity: 1; }
+}
+
+.refreshed {
+    animation: highlight 1s ease-out;
+}
+
+/* Component content transition */
+.component-content pre {
+    transition: all 0.3s ease;
+}
