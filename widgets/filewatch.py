@@ -1,4 +1,5 @@
 from features.component import Component
+import os
 
 
 class FileWatch(Component):
@@ -8,31 +9,36 @@ class FileWatch(Component):
         self.env['lines_to_display'] = 3
         self.file_content = []
         self.last_read_line_count = 0
+        self.max_width = 80
         self.initialize()
 
     def initialize(self):
-        if self.env['filename']:
+        if self.env['filename'] and os.path.exists(self.env['filename']):
             with open(self.env['filename'], 'r') as file:
-                lines = file.readlines()
-                self.last_read_line_count = len(lines)
+                self.last_read_line_count = sum(1 for _ in file)
 
     def refresh(self):
-        if self.env['filename']:
-            with open(self.env['filename'], 'r') as file:
-                lines = file.readlines()
+        if not self.env['filename'] or not os.path.exists(self.env['filename']):
+            self.file_content = ["File not found"]
+            return
+
+        with open(self.env['filename'], 'r') as file:
+            lines = file.readlines()
+            current_line_count = len(lines)
+            
+            if current_line_count > self.last_read_line_count:
                 new_lines = lines[self.last_read_line_count:]
-                if new_lines:
-                    self.file_content.extend(new_lines)
-                    self.last_read_line_count = len(lines)
-
-
-        else:
-            self.file_content = []
+                self.file_content.extend(new_lines)
+                self.last_read_line_count = current_line_count
 
     def view(self):
-        # If new lines are added, show them
-        if self.file_content:
-            new_lines = ''.join(self.file_content[-self.env['lines_to_display']:])
-            return f"File Watcher: New lines added:\n{new_lines}"
-        else:
-            return "No new lines found."
+        if not self.file_content:
+            return "No changes detected"
+
+        header = f"File: {self.env['filename']}\n" + "-" * self.max_width
+        recent_changes = self.file_content[-self.env['lines_to_display']:]
+        formatted_changes = [
+            f"[NEW] {line.strip()}" for line in recent_changes
+        ]
+        
+        return f"{header}\nRecent Changes:\n" + "\n".join(formatted_changes)
