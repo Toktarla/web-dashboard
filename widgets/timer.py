@@ -16,7 +16,6 @@ class Timer(Component):
             self.running = True
             self.remaining_time = int(self.env['value'])
             self.last_refresh_time = time.time()
-            print(f"Timer started with {self.remaining_time} seconds.")
 
     def stop(self):
         self.running = False

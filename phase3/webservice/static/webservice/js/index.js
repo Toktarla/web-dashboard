@@ -1,3 +1,64 @@
+const components = [
+  {
+    name: "SYSSTAT",
+    description: "Display system statistics",
+    hasParams: false,
+  },
+  {
+    name: "CHAT",
+    description: "Chat with message history",
+    hasParams: true,
+    command: "CHAT",
+    params: [{ name: "message", label: "Message", type: "text" }],
+  },
+
+  {
+    name: "DBQUERY",
+    description: "Database queries",
+    hasParams: true,
+    params: [{ name: "query", label: "SQL Query", type: "text" }],
+  },
+  {
+    name: "VIEW_DBQUERY",
+    description: "View query results",
+    hasParams: false,
+  },
+  {
+    name: "FILEWATCH",
+    description: "Monitor file changes",
+    hasParams: false,
+  },
+  {
+    name: "MESSAGE_ROTATE",
+    description: "Rotate through messages",
+    hasParams: false,
+  },
+  {
+    name: "URLGET",
+    description: "Browse web content",
+    hasParams: true,
+    params: [{ name: "url", label: "URL", type: "text" }],
+  },
+  {
+    name: "TIMER",
+    description: "Timer control",
+    hasParams: true,
+    params: [
+      {
+        name: "action",
+        label: "Action",
+        type: "select",
+        options: ["start", "stop", "reset", "pause", "play"],
+      },
+      {
+        name: "seconds",
+        label: "Time (seconds)",
+        type: "number",
+      },
+    ],
+  },
+];
+
 function getComponentIcon(componentType) {
   const iconMap = {
     SYSSTAT: "monitoring",
@@ -19,7 +80,6 @@ let dashboards = {};
 document.addEventListener("DOMContentLoaded", () => {
   loadDashboards();
   handleRoute();
-
   // Handle browser back/forward buttons
   window.addEventListener("popstate", handleRoute);
 });
@@ -119,18 +179,7 @@ function showDashboardList() {
                     Create New Dashboard
                 </button>
             </div>
-            <div class="dashboard-list">
-                ${Object.entries(dashboards)
-                  .map(
-                    ([key, dashboard]) => `
-                    <div class="dashboard-item" onclick="navigateTo('${key}')">
-                        <span class="material-icons">dashboard</span>
-                        ${dashboard.name}
-                    </div>
-                `
-                  )
-                  .join("")}
-            </div>
+          
         `;
 }
 
@@ -224,8 +273,9 @@ function refreshComponent(button, command) {
   })
     .then((response) => response.json())
     .then((data) => {
+      const parsedResponse = JSON.parse(data.response);
       // Update the component content
-      contentDiv.textContent = data.response;
+      contentDiv.textContent = parsedResponse.value;
 
       // Add a brief highlight effect
       contentDiv.classList.add("refreshed");
@@ -305,51 +355,152 @@ function showDashboard(dashboardName) {
                 </button>
             </div>
         </div>
-        <div class="tabs">
-            ${dashboard.tabs
-              .map(
-                (tab, index) => `
-                <div class="tab ${index === 0 ? "active" : ""}" 
-                     onclick="switchTab('${dashboardName}', ${index})">
-                    <span class="material-icons">tab</span>
-                    ${tab.name}
-                    <span class="delete-btn" onclick="deleteTab('${dashboardName}', ${index}); event.stopPropagation();">
-                        <span class="material-icons">close</span>
-                    </span>
+        <div class="dashboard-layout">
+            <div class="component-toolbox">
+                <h3>Components Toolbox</h3>
+                <div class="toolbox-components">
+                    ${components
+                      .map(
+                        (comp) => `
+                        <div class="toolbox-component" draggable="true" data-component='${JSON.stringify(
+                          comp
+                        )}'>
+                            <span class="material-icons">${getComponentIcon(
+                              comp.name
+                            )}</span>
+                            <div class="toolbox-component-info">
+                                <strong>${comp.name}</strong>
+                                <small>${comp.description}</small>
+                            </div>
+                        </div>
+                    `
+                      )
+                      .join("")}
                 </div>
-            `
-              )
-              .join("")}
-        </div>
-        <div class="tab-contents">
-            ${dashboard.tabs
-              .map(
-                (tab, index) => `
-                <div class="tab-content ${
-                  index === 0 ? "active" : ""
-                }" id="tab-${index}">
-                    <div class="header">
-                        <h3>${tab.name}</h3>
-                        <button onclick="createComponent('${dashboardName}', ${index})">
-                            <span class="material-icons">add_box</span>
-                            Add Component
-                        </button>
-                    </div>
-                    <div class="components">
-                        ${
-                          Array.isArray(tab.components)
-                            ? tab.components.join("")
-                            : ""
-                        }
-                    </div>
+            </div>
+            <div class="dashboard-content">
+                <div class="tabs">
+                    ${dashboard.tabs
+                      .map(
+                        (tab, index) => `
+                        <div class="tab ${index === 0 ? "active" : ""}" 
+                             onclick="switchTab('${dashboardName}', ${index})">
+                            <span class="material-icons">tab</span>
+                            ${tab.name}
+                            <span class="delete-btn" onclick="deleteTab('${dashboardName}', ${index}); event.stopPropagation();">
+                                <span class="material-icons">close</span>
+                            </span>
+                        </div>
+                    `
+                      )
+                      .join("")}
                 </div>
-            `
-              )
-              .join("")}
+                <div class="tab-contents">
+                    ${dashboard.tabs
+                      .map(
+                        (tab, index) => `
+                        <div class="tab-content ${
+                          index === 0 ? "active" : ""
+                        }" id="tab-${index}">
+                            <div class="header">
+                                <h3>${tab.name}</h3>
+                            </div>
+                            <div class="components" data-tab-index="${index}">
+                                ${
+                                  Array.isArray(tab.components)
+                                    ? tab.components.join("")
+                                    : ""
+                                }
+                            </div>
+                        </div>
+                    `
+                      )
+                      .join("")}
+                </div>
+            </div>
         </div>
     `;
 
-  initializeDragAndDrop(dashboardName, 0);
+  initializeDragAndDrop(dashboardName);
+}
+
+function initializeDragAndDrop(dashboardName) {
+  const toolboxComponents = document.querySelectorAll(".toolbox-component");
+  const dropZones = document.querySelectorAll(".components");
+
+  toolboxComponents.forEach((component) => {
+    component.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("component", component.dataset.component);
+    });
+  });
+
+  dropZones.forEach((zone) => {
+    zone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      zone.classList.add("drag-over");
+    });
+
+    zone.addEventListener("dragleave", () => {
+      zone.classList.remove("drag-over");
+    });
+
+    zone.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      zone.classList.remove("drag-over");
+
+      const componentData = JSON.parse(e.dataTransfer.getData("component"));
+      const tabIndex = zone.dataset.tabIndex;
+
+      if (componentData.hasParams) {
+        // Show parameter dialog
+        showParamDialog(dashboardName, tabIndex, componentData);
+      } else {
+        // Direct component creation
+        sendComponentCommand(dashboardName, tabIndex, componentData.name);
+      }
+    });
+  });
+}
+
+function showParamDialog(dashboardName, tabIndex, component) {
+  const dialog = document.createElement("div");
+  dialog.className = "dialog";
+  dialog.innerHTML = `
+    <div class="dialog-content">
+      <h3>${component.name} Parameters</h3>
+      <form onsubmit="event.preventDefault(); handleParamSubmit(this, '${dashboardName}', ${tabIndex}, '${
+    component.name
+  }')">
+        ${component.params
+          .map(
+            (param) => `
+          <div class="form-group">
+            <label for="${param.name}">${param.label}</label>
+            ${
+              param.type === "select"
+                ? `<select name="${param.name}" required>
+                  ${param.options
+                    .map(
+                      (opt) => `
+                    <option value="${opt}">${opt}</option>
+                  `
+                    )
+                    .join("")}
+                </select>`
+                : `<input type="${param.type}" name="${param.name}" required>`
+            }
+          </div>
+        `
+          )
+          .join("")}
+        <div class="dialog-actions">
+          <button type="submit">Create</button>
+          <button type="button" onclick="this.closest('.dialog').remove()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(dialog);
 }
 
 function deleteDashboard(dashboardName) {
@@ -392,76 +543,6 @@ function deleteComponent(button, dashboardName, tabIndex) {
 }
 
 function createComponent(dashboardName, tabIndex) {
-  const components = [
-    {
-      name: "SYSSTAT",
-      description: "Display system statistics",
-      hasParams: false,
-    },
-    {
-      name: "CHAT",
-      description: "Send chat messages",
-      hasParams: true,
-      command: "CHAT",
-      params: [{ name: "message", label: "Message", type: "text" }],
-    },
-    {
-      name: "VIEW_CHAT",
-      description: "View chat history",
-      hasParams: false,
-    },
-    {
-      name: "DBQUERY",
-      description: "Execute database queries",
-      hasParams: true,
-      params: [{ name: "query", label: "SQL Query", type: "text" }],
-    },
-    {
-      name: "VIEW_DBQUERY",
-      description: "View query results",
-      hasParams: false,
-    },
-    {
-      name: "FILEWATCH",
-      description: "Monitor file changes",
-      hasParams: false,
-    },
-    {
-      name: "MESSAGE_ROTATE",
-      description: "Rotate through messages",
-      hasParams: false,
-    },
-    {
-      name: "URLGET",
-      description: "Fetch URL content",
-      hasParams: true,
-      params: [{ name: "url", label: "URL", type: "text" }],
-    },
-    {
-      name: "TIMER",
-      description: "Timer control",
-      hasParams: true,
-      params: [
-        {
-          name: "action",
-          label: "Action",
-          type: "select",
-          options: ["start", "stop", "reset", "pause", "play"],
-        },
-        {
-          name: "seconds",
-          label: "Time (seconds)",
-          type: "number",
-        },
-      ],
-    },
-    {
-      name: "VIEW_TIMER",
-      description: "View timer status",
-      hasParams: false,
-    },
-  ];
-
   const dialog = document.createElement("div");
   dialog.className = "dialog";
   dialog.style.cssText = `
@@ -630,10 +711,25 @@ function sendComponentCommand(dashboardName, tabIndex, command) {
   })
     .then((response) => response.json())
     .then((data) => {
-      const componentHTML = createComponentHTML(command, data.response,dashboardName, tabIndex);
-      dashboards[dashboardName].tabs[tabIndex].components.push(componentHTML);
-      saveDashboards();
-      showDashboard(dashboardName);
+      console.log("Raw data:", data);
+
+      // Parse the JSON string in the 'response' field
+      const parsedResponse = JSON.parse(data.response);
+      console.log("Parsed response:", parsedResponse);
+
+      if (parsedResponse.status === "success") {
+        const componentHTML = createComponentHTML(
+          command,
+          parsedResponse.value,
+          dashboardName,
+          tabIndex
+        );
+        dashboards[dashboardName].tabs[tabIndex].components.push(componentHTML);
+        saveDashboards();
+        showDashboard(dashboardName);
+      } else if (parsedResponse.status === "fail") {
+        alert(`Error: ${parsedResponse.value}`);
+      }
     })
     .catch((error) => console.error("Error:", error));
 }
@@ -642,6 +738,118 @@ function createComponentHTML(command, response, dashboardName, tabIndex) {
   const commandParts = command.split(" ");
   const componentType = commandParts[0];
 
+  if (componentType === "TIMER") {
+    const seconds = commandParts[2] || 0;
+    return `
+            <div class="component" draggable="true">
+                <div class="component-header">
+                    <h4>
+                        <span class="material-icons">${getComponentIcon(
+                          componentType
+                        )}</span>
+                        ${componentType}
+                    </h4>
+                    <div class="timer-controls">
+                        <button onclick="timerControl(this, 'start', ${seconds})" class="timer-btn">
+                            <span class="material-icons">play_arrow</span>
+                        </button>
+                        <button onclick="timerControl(this, 'pause')" class="timer-btn">
+                            <span class="material-icons">pause</span>
+                        </button>
+                        <button onclick="timerControl(this, 'stop')" class="timer-btn">
+                            <span class="material-icons">stop</span>
+                        </button>
+                        <button onclick="timerControl(this, 'reset', ${seconds})" class="timer-btn">
+                            <span class="material-icons">restart_alt</span>
+                        </button>
+                    </div>
+                    <button onclick="deleteComponent(this, '${dashboardName}', ${tabIndex})" class="delete-btn">
+                        <span class="material-icons">delete</span>
+                    </button>
+                </div>
+                <div class="component-content">
+                    <div class="timer-display">
+                        <span class="timer-value">${seconds}</span>
+                        <span class="timer-status">Ready</span>
+                    </div>
+                </div>
+            </div>
+        `;
+  }
+
+  if (componentType === "CHAT") {
+    return `
+            <div class="component" draggable="true">
+                <div class="component-header">
+                    <h4>
+                        <span class="material-icons">${getComponentIcon(
+                          componentType
+                        )}</span>
+                        ${componentType}
+                    </h4>
+                    <button onclick="refreshChat(this)" class="refresh-btn">
+                        <span class="material-icons">refresh</span>
+                    </button>
+                    <button onclick="deleteComponent(this, '${dashboardName}', ${tabIndex})" class="delete-btn">
+                        <span class="material-icons">delete</span>
+                    </button>
+                </div>
+                <div class="component-content chat-component">
+                    <div class="chat-messages">
+                        <pre>${response || "No messages yet"}</pre>
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" placeholder="Type your message..." class="chat-message-input">
+                        <button onclick="sendChatMessage(this)" class="send-message-btn">
+                            <span class="material-icons">send</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+  }
+
+  if (componentType === "URLGET") {
+    const url = commandParts[1] || "";
+    return `
+            <div class="component urlget-component" draggable="true">
+                <div class="component-header">
+                    <h4>
+                        <span class="material-icons">${getComponentIcon(
+                          componentType
+                        )}</span>
+                        Fetch URL content
+                    </h4>
+                    <div class="url-controls">
+                        <input type="text" class="url-input" value="${url}" placeholder="Enter URL (include https://)">
+                        <button onclick="loadURL(this)" class="url-load-btn">
+                            <span class="material-icons">refresh</span>
+                        </button>
+                    </div>
+                    <button onclick="deleteComponent(this, '${dashboardName}', ${tabIndex})" class="delete-btn">
+                        <span class="material-icons">delete</span>
+                    </button>
+                </div>
+                <div class="component-content web-view-container">
+                    <div class="url-preview">
+                        <div class="url-info">
+                            <a href="${url}" target="_blank" class="url-link">
+                                <span class="material-icons">open_in_new</span>
+                                Open in new tab
+                            </a>
+                        </div>
+                        <div class="url-content">
+                            <pre>${
+                              response || "Enter a URL to fetch content"
+                            }</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+  }
+
+  // Default component HTML for other types
   return `
         <div class="component" draggable="true">
             <div class="component-header">
@@ -658,52 +866,14 @@ function createComponentHTML(command, response, dashboardName, tabIndex) {
                     <span class="material-icons">refresh</span>
                 </button>
                 <button onclick="deleteComponent(this, '${dashboardName}', ${tabIndex})" class="delete-btn">
-                        <span class="material-icons">delete</span>
-                    </button>
+                    <span class="material-icons">delete</span>
+                </button>
             </div>
             <div class="component-content">
                 <pre>${response || "No data"}</pre>
             </div>
         </div>
     `;
-}
-
-function selectComponent(dashboardName, tabIndex, componentName) {
-  if (componentName === "SYSSTAT") {
-    // Use the existing TCP client to send SYSSTAT command
-    fetch("/send_command/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      body: "command=SYSSTAT",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        const componentHTML = `
-            <div class="component-header">
-                <h4>
-                    <span class="material-icons">monitoring</span>
-                    System Statistics
-                </h4>
-                <button onclick="refreshSysStat(this, '${dashboardName}', ${tabIndex})">
-                    <span class="material-icons">refresh</span>
-                    Refresh
-                </button>
-            </div>
-            <div class="sysstat-content">
-                <pre>${data.response}</pre>
-            </div>
-        `;
-
-        dashboards[dashboardName].tabs[tabIndex].components.push(componentHTML);
-        saveDashboards();
-        showDashboard(dashboardName);
-      })
-      .catch((error) => console.error("Error:", error));
-  }
-  document.querySelector(".dialog").remove();
 }
 
 function refreshSysStat(button, dashboardName, tabIndex) {
@@ -739,3 +909,178 @@ function getCookie(name) {
   }
   return cookieValue;
 }
+
+function timerControl(button, action, seconds) {
+  const componentDiv = button.closest(".component");
+  const timerValue = componentDiv.querySelector(".timer-value");
+  const timerStatus = componentDiv.querySelector(".timer-status");
+  let intervalId = componentDiv.dataset.intervalId;
+
+  // Clear existing interval if any
+  if (intervalId) {
+    clearInterval(parseInt(intervalId));
+  }
+
+  switch (action) {
+    case "start":
+      timerStatus.textContent = "Running";
+      let remainingTime = seconds;
+      timerValue.textContent = remainingTime;
+
+      intervalId = setInterval(() => {
+        remainingTime--;
+        timerValue.textContent = remainingTime;
+
+        if (remainingTime <= 0) {
+          clearInterval(intervalId);
+          timerStatus.textContent = "Finished";
+        }
+      }, 1000);
+
+      componentDiv.dataset.intervalId = intervalId;
+      break;
+
+    case "pause":
+      timerStatus.textContent = "Paused";
+      break;
+
+    case "stop":
+      timerValue.textContent = seconds;
+      timerStatus.textContent = "Stopped";
+      break;
+
+    case "reset":
+      timerValue.textContent = seconds;
+      timerStatus.textContent = "Ready";
+      break;
+  }
+
+  // Send command to backend
+  fetch("/send_command/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: `command=TIMER ${action} ${seconds}`,
+  });
+}
+
+function sendChatMessage(button) {
+  const component = button.closest(".component");
+  const input = component.querySelector(".chat-message-input");
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  fetch("/send_command/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: `command=CHAT ${encodeURIComponent(message)}`,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      input.value = ""; // Clear input
+      refreshChat(button); // Refresh chat to show new message
+    })
+    .catch((error) => console.error("Error:", error));
+}
+
+function refreshChat(button) {
+  const component = button.closest(".component");
+  const messagesContainer = component.querySelector(".chat-messages pre");
+
+  // Add loading state
+  button.disabled = true;
+  const originalIcon = button.innerHTML;
+  button.innerHTML = '<span class="material-icons rotating">sync</span>';
+
+  fetch("/send_command/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-CSRFToken": getCookie("csrftoken"),
+    },
+    body: "command=VIEW_CHAT",
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const parsedResponse = JSON.parse(data.response);
+      messagesContainer.textContent = parsedResponse.value;
+
+      // Add highlight effect
+      messagesContainer.classList.add("refreshed");
+      setTimeout(() => {
+        messagesContainer.classList.remove("refreshed");
+      }, 1000);
+    })
+    .catch((error) => console.error("Error:", error))
+    .finally(() => {
+      // Restore button state
+      button.disabled = false;
+      button.innerHTML = originalIcon;
+    });
+}
+
+function loadURL(button) {
+  const component = button.closest('.component');
+  const urlInput = component.querySelector('.url-input');
+  const contentDiv = component.querySelector('.url-content pre');
+  const url = urlInput.value.trim();
+
+  if (!url) return;
+
+  // Show loading state
+  button.disabled = true;
+  const originalIcon = button.innerHTML;
+  button.innerHTML = '<span class="material-icons rotating">sync</span>';
+  contentDiv.textContent = 'Loading...';
+
+  // Update URL link
+  const urlLink = component.querySelector('.url-link');
+  urlLink.href = url;
+
+  // Send request to server
+  fetch("/send_command/", {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": getCookie("csrftoken"),
+      },
+      body: `command=URLGET ${encodeURIComponent(url)}`,
+  })
+  .then(response => response.json())
+  .then(data => {
+      const parsedResponse = JSON.parse(data.response);
+      contentDiv.textContent = parsedResponse.value;
+      
+      // Add highlight effect
+      contentDiv.classList.add('refreshed');
+      setTimeout(() => {
+          contentDiv.classList.remove('refreshed');
+      }, 1000);
+  })
+  .catch(error => {
+      contentDiv.textContent = 'Error fetching content: ' + error.message;
+  })
+  .finally(() => {
+      button.disabled = false;
+      button.innerHTML = originalIcon;
+  });
+}
+
+// Add event listener for Enter key in chat input
+document.addEventListener("click", function (e) {
+  if (e.target.classList.contains("chat-message-input")) {
+    e.target.addEventListener("keypress", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const sendButton = this.nextElementSibling;
+        sendChatMessage(sendButton);
+      }
+    });
+  }
+});

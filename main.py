@@ -12,6 +12,9 @@ from widgets.file_share import FileShare
 from tcp_server import TCPServer
 from widgets.item import Item
 import argparse
+from observer import Observer
+
+global_observer = Observer(4)
 
 def main():
     # Attach users to the dashboard
@@ -77,11 +80,11 @@ if __name__ == "__main__":
     components["FileWatch"].env['filename'] = "data/file.txt"
     components["FileWatch"].env['lines_to_display'] = 3
 
-    main()
+    # main()
 
     parser = argparse.ArgumentParser(description="Run the server with specified parameters.")
-    parser.add_argument("--port", type=int, default=8080, help="Port number for the server.")
+    parser.add_argument("--port", type=int, default=8008, help="Port number for the server.")
     args = parser.parse_args()
 
-    server = TCPServer(args.port, "localhost", components)
+    server = TCPServer(args.port, "localhost", components, global_observer)
     server.run()
