@@ -1,25 +1,95 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phase 3 Web Service</title>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{% static 'webservice/css/style.css' %}">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Dash</title>
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"
+    />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{% static 'webservice/css/style.css' %}"
+    />
+  </head>
+  <body>
     <div class="container">
-        <div class="header">
-            <h1>
-                <span class="material-icons">dashboard</span>
-                Dashboard Manager
-            </h1>
+      <div class="header">
+        <h1>Web Dash</h1>
+      </div>
+
+      <!-- Component Toolbox -->
+      <div id="component-toolbox">
+        <h3>Components</h3>
+        <div class="toolbox-items">
+          <div
+            class="component-item"
+            draggable="true"
+            data-component="URLGetter"
+          >
+            URL Getter
+          </div>
+          <div
+            class="component-item"
+            draggable="true"
+            data-component="MessageRotate"
+          >
+            Message Rotate
+          </div>
+          <div class="component-item" draggable="true" data-component="Timer">
+            Timer
+          </div>
+          <div class="component-item" draggable="true" data-component="Chat">
+            Chat
+          </div>
+          <div class="component-item" draggable="true" data-component="DBQuery">
+            DB Query
+          </div>
+          <div
+            class="component-item"
+            draggable="true"
+            data-component="FileWatch"
+          >
+            File Watch
+          </div>
+          <!-- Add other components -->
         </div>
-        <nav class="dashboard-nav"></nav>
-        <div id="main-content"></div>
+      </div>
+
+      <!-- Dashboard Area -->
+      <div id="dashboard-tabs">
+        <ul>
+          <li><a href="#tab-1">Dashboard 1</a></li>
+          <button id="add-tab">+</button>
+        </ul>
+        <div id="tab-1" class="dashboard-tab">
+          <div class="components-container" id="components-1"></div>
+        </div>
+      </div>
     </div>
-    <script src="{% static 'webservice/js/index.js' %}"></script>
-</body>
+
+    <!-- Component Settings Dialog -->
+    <div id="settings-dialog" title="Component Settings" style="display: none">
+      <form id="component-settings-form">
+        <div id="settings-content"></div>
+        <button type="submit">Save</button>
+      </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <script src="{% static 'webservice/js/websocket.js' %}"></script>
+    <script src="{% static 'webservice/js/dashboard.js' %}"></script>
+  </body>
 </html>
