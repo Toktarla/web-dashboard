@@ -206,42 +206,11 @@ function createComponent(dashboardName, tabIndex) {
 }
 
 function refreshComponent(button, command) {
-  const componentDiv = button.closest(".component");
-  const contentDiv = componentDiv.querySelector(".component-content pre");
-
-  // Add loading state
-  button.disabled = true;
-  const originalIcon = button.innerHTML;
-  button.innerHTML = '<span class="material-icons rotating">sync</span>';
-
-  fetch("/send_command/", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "X-CSRFToken": getCookie("csrftoken"),
-    },
-    body: `command=${encodeURIComponent(command)}`,
-  })
-    .then((response) => response.json())
-    .then((data) => {
-      // Update the component content
-      contentDiv.textContent = data.response;
-
-      // Add a brief highlight effect
-      contentDiv.classList.add("refreshed");
-      setTimeout(() => {
-        contentDiv.classList.remove("refreshed");
-      }, 1000);
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-      alert("Error refreshing component: " + error.message);
-    })
-    .finally(() => {
-      // Restore button state
-      button.disabled = false;
-      button.innerHTML = originalIcon;
-    });
+  wsClient.sendCommand({
+    obj: command.split(" ")[0],
+    method: "refresh",
+    params: {},
+  });
 }
 
 function saveDashboards() {
@@ -630,7 +599,12 @@ function sendComponentCommand(dashboardName, tabIndex, command) {
   })
     .then((response) => response.json())
     .then((data) => {
-      const componentHTML = createComponentHTML(command, data.response,dashboardName, tabIndex);
+      const componentHTML = createComponentHTML(
+        command,
+        data.response,
+        dashboardName,
+        tabIndex
+      );
       dashboards[dashboardName].tabs[tabIndex].components.push(componentHTML);
       saveDashboards();
       showDashboard(dashboardName);
